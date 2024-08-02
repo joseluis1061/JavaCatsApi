@@ -1,9 +1,8 @@
 package org.jlz;
 
 import com.google.gson.Gson;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -11,8 +10,13 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class GatosService {
+
+  private static Dotenv dotenv = Dotenv.load();
+  private static String apiKey = dotenv.get("API_KEY");
+
 
   public static void verGatos() throws IOException {
     OkHttpClient client = new OkHttpClient();
@@ -51,8 +55,9 @@ public class GatosService {
           String menu = "Opciones: \n"
                         + "1. Ver otra imagen \n"
                         + "2. Favorito \n"
-                        + "3. Volver d\n";
-          String[] botones = {"Ver otra imagen", "Favorito", "Volver"};
+                        + "3. Ver Favoritos \n"
+                        + "4. Volver \n";
+          String[] botones = {"Ver otra imagen", "Favorito", "Ver Favoritos", "Volver"};
           String id_gato = gatos.getId();
           String opcion = (String) (String) JOptionPane.showInputDialog(
               null,
@@ -77,24 +82,71 @@ public class GatosService {
               verGatos();
               break;
             case 1:
-              favoritoGato();
+              favoritoGato(gatos);
+              break;
+            case 2:
+              listarFavorito();
               break;
             default:
-
               break;
           }
         }
         catch (IOException e){
           System.out.println("Error en la petición "+ e);
         }
-        System.out.println("Respuesta de la API:\n" + responseBody);
+        //System.out.println("Respuesta de la API:\n" + responseBody);
       } else {
         System.out.println("Error en la solicitud: " + response.code());
       }
     }
   }
 
-  public static void favoritoGato(){
-    System.out.println("Gatos favoritos");
+  public static void favoritoGato(@NotNull Gatos gato) throws IOException {
+    System.out.println("Agregar a favoritos");
+    String urlApi = "https://api.thecatapi.com/v1/favourites";
+
+    System.out.println(gato.toString());
+
+    OkHttpClient client = new OkHttpClient();
+    MediaType mediaType = MediaType.parse("application/json");
+    RequestBody body = RequestBody.create(mediaType, "{\r\n    \"image_id\":\"" + gato.getId() + "\"\r\n}");
+
+    Request request = new Request.Builder()
+        .url(urlApi)
+        .post(body)
+        .addHeader("Content-Type", "application/json")
+        .addHeader("x-api-key", gato.getApiKey())
+        .build();
+
+    try(Response response = client.newCall(request).execute();) {
+      // Procesar la respuesta
+      assert response.body() != null;
+      String responseBody = response.body().string();
+      System.out.println(responseBody);
+    }
+    catch (IOException e){
+      System.err.println(e);
+    }
+  }
+
+  public static void listarFavorito() throws IOException {
+    System.out.println("Lista de favoritos");
+    String urlApi = "https://api.thecatapi.com/v1/favourites";
+    OkHttpClient client = new OkHttpClient();
+
+    Request request = new Request.Builder()
+        .url(urlApi)
+        .addHeader("Content-Type", "application/json")
+        .addHeader("x-api-key", apiKey)
+        .build();
+    try(Response response = client.newCall(request).execute()){
+      if(response.isSuccessful()){
+        assert response.body() != null;
+        String responseBody = response.body().string();
+        System.out.println(responseBody);
+      }
+    }
+    catch (IOException e){ System.out.println(e);}
+
   }
 }

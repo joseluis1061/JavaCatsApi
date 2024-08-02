@@ -3,10 +3,10 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class Gatos {
   Dotenv dotenv = Dotenv.load();
 
-  String id;
-  String url;
-  String apiKey = dotenv.get("API_KEY");
-  String image;
+  private String id;
+  private String url;
+  private String apiKey = dotenv.get("API_KEY");
+  private String image;
 
 
   public String getId() {
@@ -39,5 +39,15 @@ public class Gatos {
 
   public void setUrl(String url) {
     this.url = url;
+  }
+
+  @Override
+  public String toString() {
+    return "Gatos{" +
+        "id='" + id + '\'' +
+        ", image='" + image + '\'' +
+        ", url='" + url + '\'' +
+        ", apiKey='" + apiKey + '\'' +
+        '}';
   }
 }
